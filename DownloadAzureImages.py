@@ -1,11 +1,11 @@
 # Databricks notebook source
 
 
-This doesn't work for years...
+This (secrets/createScope) doesn't work for years when using an EC2 instance (AWS environment)...
 "Scope with Azure KeyVault must have userAADToken defined!"
 
 Story:
 "https://github.com/DataThirstLtd/azure.databricks.cicd.tools/issues/43"
 
 Impact:
-I'll do it in AWS instead
+No multi-cloud project, I'll do everything in AWS instead
