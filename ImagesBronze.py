@@ -7,32 +7,20 @@ import urllib
 
 # COMMAND ----------
 
-df = spark.read.format("image").load("/mnt/tese.manuel.romao.images/images/")
-display(df)
+# df = spark.read.format("image").load("/mnt/tese.manuel.romao.images/images/")
+# display(df)
 
 # COMMAND ----------
 
-sample_img_dir = "/mnt/tese.manuel.romao.images/images/"
+#%fs
+# dbutils.fs/Tables.put("dbfs:/mnt/tese.manuel.romao.images/images/ManuelRomao.jpg", "This is the actual text that will be saved to disk. Like a 'Hello world!' example")
+# FileStore/tables
 
 # COMMAND ----------
 
-sample_img_dir
+# image_df = spark.read.format("image").load("dbfs:/mnt/tese.manuel.romao.images/images/ManuelRomao.jpg")
 
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-# MAGIC %fs
-# MAGIC dbutils.fs/Tables.put("dbfs:/mnt/tese.manuel.romao.images/images/ManuelRomao.jpg", "This is the actual text that will be saved to disk. Like a 'Hello world!' example")
-# MAGIC FileStore/tables
-
-# COMMAND ----------
-
-image_df = spark.read.format("image").load("dbfs:/mnt/tese.manuel.romao.images/images/ManuelRomao.jpg")
-
-display(image_df)
+# display(image_df)
 
 # COMMAND ----------
 
@@ -41,20 +29,15 @@ display(image_df)
 
 # COMMAND ----------
 
-# MAGIC %fs ls FileStore/tables
+#%fs ls FileStore/tables
 
 # COMMAND ----------
 
-# MAGIC %fs 
-# MAGIC ls FileStore/images
+# display(image_df.select("image.origin"))
 
 # COMMAND ----------
 
-display(image_df.select("image.origin"))
-
-# COMMAND ----------
-
-displayHTML("<img src ='dbfs:/mnt/tese.manuel.romao.images/images/ManuelRomao.jpg'>")
+# displayHTML("<img src ='dbfs:/mnt/tese.manuel.romao.images/images/ManuelRomao.jpg'>")
 
 # COMMAND ----------
 

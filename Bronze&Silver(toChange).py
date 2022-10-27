@@ -39,8 +39,8 @@ delimiter = ","
 # MAGIC %sql
 # MAGIC 
 # MAGIC -- Read the stream
-# MAGIC -- create table if not exists bronze_sales
-# MAGIC create or replace table bronze_sales
+# MAGIC create table if not exists bronze_sales
+# MAGIC -- create or replace table bronze_sales
 # MAGIC -- (year string
 # MAGIC -- , date string
 # MAGIC -- , unit string
@@ -60,14 +60,14 @@ delimiter = ","
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC select * from bronze_sales
-# MAGIC limit 10;
+# %sql
+# select * from bronze_sales
+# limit 10;
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC describe bronze_sales
+# %sql
+# describe bronze_sales
 
 # COMMAND ----------
 
@@ -128,6 +128,15 @@ def autoload_to_table(data_source, source_format, table_name, checkpoint_directo
 
 # COMMAND ----------
 
+def block_until_stream_is_ready(query, min_batches=2):
+    import time
+    while len(query.recentProgress) < min_batches:
+        time.sleep(5) # Give it a couple of seconds
+
+    print(f"The stream has processed {len(query.recentProgress)} batchs")
+
+# COMMAND ----------
+
 # tmp_sales_ingestion = autoload_to_table(data_source = "/mnt/tese.manuel.romao/data/",
 #                           source_format = "csv",
 #                           table_name = "streaming_tmp_bronze_sales",
@@ -147,7 +156,8 @@ spark.table("streaming_tmp_sales_raw").display()
 # COMMAND ----------
 
 # MAGIC %sql 
-# MAGIC describe streaming_tmp_sales_raw;
+# MAGIC -- describe streaming_tmp_sales_raw;
+# MAGIC select * from streaming_tmp_sales_raw;
 
 # COMMAND ----------
 
@@ -176,20 +186,34 @@ spark.table("streaming_tmp_sales_raw").display()
 
 # COMMAND ----------
 
-(spark.table("tmp_sales_raw")
-    .writeStream
-    .format("delta")
-    .option("checkpointLocation", "/mnt/tese.manuel.romao/checkPoints/")
-    .outputMode("append")
-    .queryName("salesAppend")
-    .trigger(once=True)
-    .table("sales_raw")
-)
+# MAGIC %sql
+# MAGIC select distinct (receipt_time) from sales_raw;
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from sales_raw;
+
+# COMMAND ----------
+
+query_sales_app=(spark.table("tmp_sales_raw")
+                .writeStream
+                .format("delta")
+                .option("checkpointLocation", "/mnt/tese.manuel.romao/checkPoints/")
+                .outputMode("append")
+                .queryName("salesAppend")
+                .trigger(once=True)
+                .table("sales_raw")
+            )
+
+query_sales_app.awaitTermination()
+query_sales_app
 
 # COMMAND ----------
 
 # MAGIC %sql 
 # MAGIC -- select * from sales_raw;
+# MAGIC -- select distinct source_file, receipt_time from sales_raw;
 # MAGIC select distinct source_file from sales_raw;
 
 # COMMAND ----------
@@ -200,7 +224,7 @@ spark.table("streaming_tmp_sales_raw").display()
 
 # MAGIC %sql
 # MAGIC create or replace temp view vw_sales_bronze as (
-# MAGIC select *, current_timestamp() as ingestion_date, input_file_name() as ingestion_file from streaming_tmp_bronze_sales);
+# MAGIC select *, current_timestamp() as ingestion_date, input_file_name() as ingestion_file from streaming_tmp_sales_raw);
 # MAGIC 
 # MAGIC select * from vw_sales_bronze;
 
@@ -221,18 +245,7 @@ spark.table("vw_sales_bronze").display()
 
 # COMMAND ----------
 
-# MAGIC %sql 
-# MAGIC describe test
-
-# COMMAND ----------
-
-display(tmp_sales_ingestionquery)
-
-# COMMAND ----------
-
-test = (query
-       .withColumn("file", input_file_name()))
-display(test)
+# display(tmp_sales_ingestionquery)
 
 # COMMAND ----------
 
@@ -241,14 +254,12 @@ display(test)
 
 # COMMAND ----------
 
-def block_until_stream_is_ready(query, min_batches=2):
-    import time
-    while len(query.recentProgress) < min_batches:
-        time.sleep(5) # Give it a couple of seconds
+# def block_until_stream_is_ready(query, min_batches=2):
+#     import time
+#     while len(query.recentProgress) < min_batches:
+#         time.sleep(5) # Give it a couple of seconds
 
-    print(f"The stream has processed {len(query.recentProgress)} batchs")
-
-block_until_stream_is_ready(query)
+#     print(f"The stream has processed {len(query.recentProgress)} batchs")
 
 # COMMAND ----------
 
@@ -270,38 +281,38 @@ display(spark.table("tmp_sales_raw"))
 
 # COMMAND ----------
 
-# MAGIC %sql 
-# MAGIC describe tmp_sales_raw;
+# %sql 
+# describe tmp_sales_raw;
 
 # COMMAND ----------
 
-display(dbutils.fs.mounts())
+# display(dbutils.fs.mounts())
 
 # COMMAND ----------
 
-spark.table("vw_sales_ingestion").display()
+# spark.table("vw_sales_ingestion").display()
 
 # COMMAND ----------
 
-(spark.table("vw_sales_ingestion")                               
-    .writeStream
-    .option("checkpointLocation", "/mnt/tese.manuel.romao/checkPoints/")
-    .option("mergeSchema", "true")
-    .outputMode("append")
-    .trigger(once=True)
-    .table("bronze_sales")
-    .awaitTermination() # This optional method blocks execution of the next cell until the incremental batch write has succeeded
-)
+# (spark.table("vw_sales_ingestion")                               
+#     .writeStream
+#     .option("checkpointLocation", "/mnt/tese.manuel.romao/checkPoints/")
+#     .option("mergeSchema", "true")
+#     .outputMode("append")
+#     .trigger(once=True)
+#     .table("bronze_sales")
+#     .awaitTermination() # This optional method blocks execution of the next cell until the incremental batch write has succeeded
+# )
+
+# spark.table("bronze_sales").display()
+
+# COMMAND ----------
 
 spark.table("bronze_sales").display()
 
 # COMMAND ----------
 
-spark.table("bronze_sales").display()
-
-# COMMAND ----------
-
-streamQuery = 
+# streamQuery = 
 
 # COMMAND ----------
 

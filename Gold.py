@@ -1,4 +1,19 @@
 # Databricks notebook source
+# MAGIC %sql
+# MAGIC use database thesis
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from grouped_sales
+# MAGIC -- where year(date) = 2021;
+
+# COMMAND ----------
+
+# MAGIC %run ./Bronze&Silver(toChange)
+
+# COMMAND ----------
+
 import numpy as np, pandas as pd
 from statsmodels.tsa.seasonal import seasonal_decompose
 
@@ -14,10 +29,11 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 
 # COMMAND ----------
 
-(spark
-  .readStream
-  .table("sales_raw")
-  .createOrReplaceTempView("tmp_sales_gold"))
+query_tmp_gold = (spark
+                        .readStream
+                        .table("sales_raw")
+                        .createOrReplaceTempView("tmp_sales_gold"))
+query_tmp_gold
 
 # COMMAND ----------
 
@@ -41,13 +57,15 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 
 # COMMAND ----------
 
-(spark.table("sales_grouped_tmp")
-      .writeStream
-      .format("delta")
-      .option("checkpointLocation", "/mnt/tese.manuel.romao/checkPointGold/")
-      .outputMode("complete")
-      .trigger(once=True)
-      .table("grouped_sales"))
+query_gold = (spark.table("sales_grouped_tmp")
+                    .writeStream
+                    .format("delta")
+                    .option("checkpointLocation", "/mnt/tese.manuel.romao/checkPoint/")
+                    .outputMode("complete")
+                    .trigger(once=True)
+                    .table("grouped_sales"))
+
+query_gold.awaitTermination()
 
 # COMMAND ----------
 
@@ -56,20 +74,8 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 
 # COMMAND ----------
 
-pd_df = (
-  spark
-    .table('grouped_sales')
-    ).toPandas()
-
-# COMMAND ----------
-
-pd_df.rolling
-
-# COMMAND ----------
-
-# MAGIC %python
-# MAGIC print(grouped_sales.rolling(7).sum(7))
-
-# COMMAND ----------
-
-seasonal_decompose(spark.table("sales_raw").groupBy("date").sum("sales_qty"))
+# Stop Streams
+for s in spark.streams.active:
+    print("Stopping " + s.id)
+    s.stop()
+    s.awaitTermination()

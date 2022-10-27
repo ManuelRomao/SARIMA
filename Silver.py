@@ -9,13 +9,13 @@
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC select *
-# MAGIC from sales_raw;
+# %sql
+# select *
+# from sales_raw;
 
 # COMMAND ----------
 
-spark.table(tableName="sales_bronze").display()
+# spark.table(tableName="sales_bronze").display()
 
 # COMMAND ----------
 
